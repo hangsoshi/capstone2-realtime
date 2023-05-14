@@ -8,6 +8,7 @@ var _images = require("./images");
 var _members = require("./members");
 var _messages = require("./messages");
 var _migrations = require("./migrations");
+var _notification = require("./notification");
 var _ordereds = require("./ordereds");
 var _password_reset_tokens = require("./password_reset_tokens");
 var _personal_access_tokens = require("./personal_access_tokens");
@@ -30,6 +31,7 @@ function initModels(sequelize) {
   var members = _members(sequelize, DataTypes);
   var messages = _messages(sequelize, DataTypes);
   var migrations = _migrations(sequelize, DataTypes);
+  var notification = _notification(sequelize, DataTypes);
   var ordereds = _ordereds(sequelize, DataTypes);
   var password_reset_tokens = _password_reset_tokens(sequelize, DataTypes);
   var personal_access_tokens = _personal_access_tokens(sequelize, DataTypes);
@@ -64,16 +66,18 @@ function initModels(sequelize) {
   users.hasMany(bank_accounts, { as: "bank_accounts", foreignKey: "user_id"});
   favor_user.belongsTo(users, { as: "user", foreignKey: "user_id"});
   users.hasMany(favor_user, { as: "favor_users", foreignKey: "user_id"});
-  friends.belongsTo(users, { as: "user", foreignKey: "user_id"});
-  users.hasMany(friends, { as: "friends", foreignKey: "user_id"});
   friends.belongsTo(users, { as: "friend", foreignKey: "friend_id"});
-  users.hasMany(friends, { as: "friend_friends", foreignKey: "friend_id"});
+  users.hasMany(friends, { as: "friends", foreignKey: "friend_id"});
+  friends.belongsTo(users, { as: "user", foreignKey: "user_id"});
+  users.hasMany(friends, { as: "user_friends", foreignKey: "user_id"});
   members.belongsTo(users, { as: "user", foreignKey: "user_id"});
   users.hasMany(members, { as: "members", foreignKey: "user_id"});
   messages.belongsTo(users, { as: "from", foreignKey: "from_id"});
   users.hasMany(messages, { as: "messages", foreignKey: "from_id"});
   messages.belongsTo(users, { as: "to", foreignKey: "to_id"});
   users.hasMany(messages, { as: "to_messages", foreignKey: "to_id"});
+  notification.belongsTo(users, { as: "receiver", foreignKey: "receiver_id"});
+  users.hasMany(notification, { as: "notifications", foreignKey: "receiver_id"});
   ordereds.belongsTo(users, { as: "user", foreignKey: "user_id"});
   users.hasMany(ordereds, { as: "ordereds", foreignKey: "user_id"});
   personal_tours.belongsTo(users, { as: "owner", foreignKey: "owner_id"});
@@ -95,6 +99,7 @@ function initModels(sequelize) {
     members,
     messages,
     migrations,
+    notification,
     ordereds,
     password_reset_tokens,
     personal_access_tokens,
