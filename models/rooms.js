@@ -29,6 +29,10 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.STRING(2048),
         allowNull: true,
       },
+      slot: {
+        type: DataTypes.BIGINT,
+        allowNull: true,
+      },
     },
     {
       sequelize,

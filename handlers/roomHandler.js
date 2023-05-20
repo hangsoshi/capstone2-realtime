@@ -44,23 +44,48 @@ module.exports = (io) => {
 
     socket.on("join-room", async ({ roomId, joiner }) => {
       const room = await rooms.findByPk(roomId);
-      const member = await members.findOne({
+      const countExistingMember = await members.count({
         where: {
-          user_id: joiner,
           room_id: roomId,
-          is_confirm: false,
+          is_confirm: true,
         },
       });
-      if (member) {
-        const user = await users.findByPk(joiner);
-        // create new notification on database
-        if (connectUsers[room.room_owner]) {
-          connectUsers[room.room_owner].emit("join-room", {
-            who: user.name,
-            message: `đang muốn tham gia vào phòng của bạn`,
-            verifyId: member.id,
+      if (countExistingMember < room.slot) {
+        const member = await members.findOne({
+          where: {
+            user_id: joiner,
+            room_id: roomId,
+          },
+        });
+        if (member) {
+          socket.emit("join-room-response", {
+            message: "Bạn đã đăng ký tham gia",
+            status: "warning",
           });
+        } else {
+          const newMember = await members.create({
+            user_id: joiner,
+            room_id: roomId,
+            is_confirm: false,
+          });
+          const user = await users.findByPk(joiner);
+          if (connectUsers[room.room_owner]) {
+            connectUsers[room.room_owner].emit("join-room", {
+              who: user.name,
+              message: `đang muốn tham gia vào phòng của bạn`,
+              verifyId: newMember.id,
+            });
+            socket.emit("join-room-response", {
+              message: "Đăng ký tham gia thành công",
+              status: "success",
+            });
+          }
         }
+      } else {
+        socket.emit("join-room-response", {
+          message: "Phòng đầy",
+          status: "error",
+        });
       }
     });
 
