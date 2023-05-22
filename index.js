@@ -9,6 +9,7 @@ const app = express();
 const httpServer = createServer(app);
 
 app.use(cors());
+app.use(express.json());
 
 const io = new Server(httpServer, {
   cors: {

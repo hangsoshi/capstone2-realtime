@@ -1,4 +1,4 @@
-const { rooms, users, members } = require("../models");
+const { rooms, users, members, notification } = require("../models");
 
 module.exports = (io) => {
   let connectUsers = {};
@@ -9,6 +9,16 @@ module.exports = (io) => {
     const userId = socket.handshake.auth.token;
 
     connectUsers[userId] = socket;
+
+    socket.on("load", async (id) => {
+      const notifications = await notification.findAll({
+        where: {
+          receiver_id: id,
+          status: false,
+        },
+      });
+      connectUsers[id].emit("load", notifications);
+    });
 
     const existing = (id) => {
       if (connectUsers[id]) {
@@ -32,6 +42,12 @@ module.exports = (io) => {
       const member = await members.findByPk(id);
       const room = await rooms.findByPk(member.room_id);
       // create new notification on database
+      notification.create({
+        receiver_id: member.user_id,
+        content: value
+          ? "Bạn đã được xác nhận tham gia vào nhóm"
+          : "Yêu cầu tham gia nhóm của bạn bị từ chối",
+      });
       if (existing(member.user_id)) {
         connectUsers[member.user_id].emit("verify-join-room", {
           message: value
@@ -74,6 +90,11 @@ module.exports = (io) => {
               who: user.name,
               message: `đang muốn tham gia vào phòng của bạn`,
               verifyId: newMember.id,
+            });
+            notification.create({
+              receiver_id: room.room_owner,
+              content: `${user.name} đang muốn tham gia vào phòng của bạn {${newMember.id}}`,
+              type: "verify",
             });
             socket.emit("join-room-response", {
               message: "Đăng ký tham gia thành công",
