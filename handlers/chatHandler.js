@@ -10,12 +10,12 @@ module.exports = async (io) => {
 
     connectedUser[userId] = socket;
 
-    console.log(Object.keys(connectedUser));
     socket.on("join-room", ({ roomId }) => {
       socket.join(`room-${roomId}`);
     });
 
     socket.on("chat-room", async ({ roomId, message }) => {
+      const user = await users.findByPk(userId);
       const mess = await messages.create({
         from_id: userId,
         room_id: roomId,
@@ -24,17 +24,22 @@ module.exports = async (io) => {
       io.to(`room-${roomId}`).emit("chat-room", {
         message: mess.content,
         sender: userId,
+        name: user.name,
       });
     });
 
     socket.on("send-message", async ({ receiver, message, t }) => {
+      const user = await users.findByPk(userId);
       const create = {
         from_id: userId,
         content: message,
         to_id: receiver,
       };
       const messageObject = await messages.create(create);
-      socket.broadcast.emit("receive-message", messageObject.content);
+      connectedUser[receiver].emit("receive-message", {
+        message: messageObject.content,
+        name: user.name,
+      });
     });
 
     socket.on("friends", async () => {

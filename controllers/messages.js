@@ -1,4 +1,4 @@
-const { messages } = require("../models");
+const { messages, users } = require("../models");
 
 const messageOfUser = async (req, res) => {
   const { id, senderId } = req.params;
@@ -8,7 +8,15 @@ const messageOfUser = async (req, res) => {
       to_id: id,
     },
   });
-  return res.status(200).json(mess);
+  const messWithProfile = await Promise.all(
+    mess.map(async (m) => {
+      const from = await users.findByPk(m.from_id);
+      const to = await users.findByPk(m.to_id);
+      console.log(from);
+      return { ...m.dataValues, from_name: from.name, to_name: to.name };
+    })
+  );
+  return res.status(200).json(messWithProfile);
 };
 
 const messageOfRooom = async (req, res) => {
@@ -18,7 +26,14 @@ const messageOfRooom = async (req, res) => {
       room_id: roomId,
     },
   });
-  return res.status(200).json(mess);
+  const messWithProfile = await Promise.all(
+    mess.map(async (m) => {
+      const from = await users.findByPk(m.from_id);
+      console.log(from);
+      return { ...m.dataValues, from_name: from.name };
+    })
+  );
+  return res.status(200).json(messWithProfile);
 };
 
 const messageService = {
