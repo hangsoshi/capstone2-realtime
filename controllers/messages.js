@@ -12,7 +12,6 @@ const messageOfUser = async (req, res) => {
     mess.map(async (m) => {
       const from = await users.findByPk(m.from_id);
       const to = await users.findByPk(m.to_id);
-      console.log(from);
       return { ...m.dataValues, from_name: from.name, to_name: to.name };
     })
   );
