@@ -36,10 +36,12 @@ module.exports = async (io) => {
         to_id: receiver,
       };
       const messageObject = await messages.create(create);
-      connectedUser[receiver].emit("receive-message", {
-        message: messageObject.content,
-        name: user.name,
-      });
+      if (connectedUser[receiver]) {
+        connectedUser[receiver].emit("receive-message", {
+          message: messageObject.content,
+          name: user.name,
+        });
+      }
     });
 
     socket.on("friends", async () => {
