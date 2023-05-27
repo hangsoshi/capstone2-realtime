@@ -40,7 +40,7 @@ module.exports = (io) => {
         }
       );
       const member = await members.findByPk(id);
-      const room = await rooms.findByPk(member.room_id);
+      const room = await rooms.findByPk(member?.room_id);
       // create new notification on database
       notification.create({
         receiver_id: member.user_id,
@@ -49,6 +49,7 @@ module.exports = (io) => {
           : "Yêu cầu tham gia nhóm của bạn bị từ chối",
       });
       if (existing(member.user_id)) {
+        console.log(connectUsers[member.user_id]);
         connectUsers[member.user_id].emit("verify-join-room", {
           message: value
             ? "Bạn đã được xác nhận tham gia vào nhóm"
@@ -86,15 +87,16 @@ module.exports = (io) => {
           });
           const user = await users.findByPk(joiner);
           if (connectUsers[room.room_owner]) {
+            const notify = await notification.create({
+              receiver_id: room.room_owner,
+              content: `${user.name} đang muốn tham gia vào phòng của bạn {${newMember.id}}`,
+              type: "verify",
+            });
             connectUsers[room.room_owner].emit("join-room", {
               who: user.name,
               message: `đang muốn tham gia vào phòng của bạn`,
               verifyId: newMember.id,
-            });
-            notification.create({
-              receiver_id: room.room_owner,
-              content: `${user.name} đang muốn tham gia vào phòng của bạn {${newMember.id}}`,
-              type: "verify",
+              notiid: notify.id,
             });
             socket.emit("join-room-response", {
               message: "Đăng ký tham gia thành công",
